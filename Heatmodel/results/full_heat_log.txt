@@ -1,0 +1,490 @@
+
+================ VALIDATION OF THE THERMAL MODEL ================
+
+--- TEST 1: 3-D eigenfunction source, all faces Dirichlet ---
+  dh = 1.000 mm | transient vs continuum 1.452e-02 | vs discrete 1.418e-02 | steady vs discrete 7.627e-16
+  dh = 0.500 mm | transient vs continuum 3.677e-03 | vs discrete 3.594e-03 | steady vs discrete 3.720e-15
+  dh = 0.250 mm | transient vs continuum 9.268e-04 | vs discrete 9.061e-04 | steady vs discrete 1.402e-14
+  dh = 1.000 mm, CFL 0.90 (dt = 1.0450 s): err vs discrete 1.418e-02
+  dh = 1.000 mm, CFL 0.10 (dt = 0.1161 s): err vs discrete 1.598e-03
+  (continuum error must fall ~4x per halving of dh -- second order;
+   discrete error is forward-Euler only, and falls in step with dt)
+
+--- TEST 2: Robin surface, uniform source, 1-D exact quadratic ---
+  theta(surface)  exact    3.333 K   computed    3.333 K
+  theta(floor)    exact   70.000 K   computed   70.000 K
+  max rel err over the depth profile : 1.685e-14
+  P_in = 0.100000 W ; P_out through the surface = 0.100000 W ; err 1.43e-14
+
+--- TEST 3: fully adiabatic box, uniform source ---
+  theta exact   3.588517 K  computed   3.588517 K  rel err 7.425e-16
+  boundary loss (must be 0): -0.000e+00 W ; energy audit 4.737e-16
+
+NOTE.  Tests 4, 6 and 7 below were run before three reporting bugs were fixed:
+  test 4 balanced the deposited power over ALL nodes rather than the free ones,
+  test 6 reported the peak WITHOUT the feed exclusion, and test 7 used only two
+  output times, so its energy audit was dominated by the trapezoid.  The
+  corrected versions, which are the ones quoted in the write-up, are at the end
+  of this file under "corrected validation tests 4, 6, 7, 9".  Tests 1, 2, 3, 5
+  and 8 below are unaffected and final.
+
+--- TEST 4: operator symmetry and steady vs long transient ---
+  <Au,v> - <u,Av> = 2.384e-07 (relative 2.301e-16)
+  <u,Au> = 1.4991e+11  (must be > 0)
+  steady peak 1118.196 K vs transient at t = 20000 s peak 1118.196 K (0.00 %)
+  steady-state balance: P_in 169.0309 W  P_loss 110.2039 W  err 3.48e-01
+
+--- TEST 5: electromagnetic cross-validation ---
+  delivered power        this run 150.000 W   field model 150.000 W
+  absorbed in the gel    this run 149.586 W (99.72 %)  field model 149.584 W (99.72 %)
+  current scale I_m      this run 4.0082 A     field model 4.0186 A  (0.259 %)
+  sigma_eff              this run 2.72283       field model 2.72283 S/m
+  q on y = 0, 174 points 1-29 mm deep: max rel diff 1.608e-02, rms 5.275e-03
+  E_gel(6mm,-5mm).Pv = 5.0812e+07 W/m^3 ; this model 5.0654e+07 W/m^3 (0.31 %)
+  power inside the 30x30x30 mm block: 141.677 W of 149.586 W in the gel (94.71 %)
+
+--- TEST 6: grid convergence of the full problem (t = 30 s) ---
+     dh[mm]   nodes      theta_max[K]  theta(6,0,-2mm)[K]  P_in[W]
+    1.000    31x 31x 31       896.648           506.637   110.204
+    0.500    61x 61x 61      1228.821           532.706   124.267
+    0.250   121x121x121      1437.143           539.420   132.269
+
+--- TEST 7: time-step convergence (dh = 0.5 mm, t = 30 s) ---
+   CFL 0.900  dt = 0.2612 s     115 steps  theta_max = 1228.8211 K  energy err 8.56e-02
+   CFL 0.450  dt = 0.1306 s     230 steps  theta_max = 1228.6169 K  energy err 8.62e-02
+   CFL 0.225  dt = 0.0653 s     460 steps  theta_max = 1228.5144 K  energy err 8.64e-02
+
+--- TEST 8: exact linearity in delivered power ---
+   t =  5 s : 3.7*theta(P) = 2272.267117 K ; theta(3.7P) = 2272.267117 K ; rel 0.00e+00
+   t = 60 s : 3.7*theta(P) = 3577.930791 K ; theta(3.7P) = 3577.930791 K ; rel 1.27e-16
+   (this is exact by construction -- it is the property T_gel.m uses
+    to turn one solve into a function of power; the check confirms
+    no power-dependent term has crept into the implementation)
+
+================ END VALIDATION ================
+
+
+=========== THERMAL MODEL ===========
+  gel: rho = 1000 kg/m^3, c = 4180 J/(kg K), k = 0.600 W/(m K)
+       alpha = 1.4354e-07 m^2/s -> diffusion length sqrt(4 a t) = 2.40 mm at 10 s
+  coolant: water at 37 degC, 5.00 L/min
+       U = 0.0926 m/s, Re_L = 3981, Re_Dh = 3981, Pr = 4.61
+       entrance lengths: hydrodynamic 5.97 m, thermal 27.52 m (both >> 30 mm, so the flat-plate estimate is the right one)
+       h: plate-lam 1460 | plate-turb 0 | duct-DB 673 | duct-lam 103 W/(m^2 K)
+       catheter: Re 199, h_out 6005, wall R 1.00e-03 -> h_eff 857 W/(m^2 K)
+       cooling length k_gel/h = 0.411 mm
+  boundary conditions: surface 'dirichlet', catheter 'transparent', floor 'adiabatic', sides 'dirichlet'
+  ROI: x -9..21 mm, y -15..15 mm, depth 0..30 mm
+  power reference: P_gen = 200 W, eta = 0.750 -> P_del = 150 W
+EM solve 14.7 s
+
+--- microwave power deposition (at 150 W delivered) ---
+  sigma_eff                    2.7228 S/m
+  absorbed in the gel           149.586 W  (99.72 %)
+  inside the 30 x 30 x 30 mm block   141.677 W  (94.71 % of the gel total)
+  peak q                       7.710e+10 W/m^3  (SAR 7.710e+07 W/kg)
+
+--- the feed singularity ---
+  a point charge Q = I_m/omega sits at the feed because the
+  prescribed current is truncated there while still at maximum.
+  excluded from PEAK REPORTING: 2.0 mm sphere about (0,0,0), 1153 of 1771561 nodes
+  power inside that sphere: 21.526 W of 141.677 W in the block (15.19 %)
+  feed_fix = 'none' -> source left exactly as the field model gives it
+
+--- transient solve ---
+  grid 121 x 121 x 121 = 1.77 M nodes, dh = 0.250 mm
+  stability limit dt = 0.0726 s, using dt = 0.0653 s
+    t =    0.008 s   theta_max =     1.30 K   (39 steps, 6 s)
+    t =    0.077 s   theta_max =    10.80 K   (79 steps, 13 s)
+    t =    0.713 s   theta_max =    62.39 K   (119 steps, 19 s)
+    t =    6.605 s   theta_max =   438.96 K   (228 steps, 30 s)
+    t =   61.224 s   theta_max =  1014.75 K   (1085 steps, 98 s)
+    t =  567.512 s   theta_max =  1230.82 K   (8856 steps, 707 s)
+  9354 steps in 744 s wall time; energy-balance error 1.22e-03
+  steady state: pcg 610 iters, relres 9.8e-10, 73 s
+
+--- the scaling law ---
+  theta(r,t; P) = (P_delivered / 150 W) * Theta(r,t), exactly.
+  T(r,t) = 37 + eta * P_generator / 150 * Theta(r,t),  eta = 0.750
+
+--- peak temperature rise, at the reference 200 W generator power ---
+      t [s]     Theta_max [K]     T_max [degC]   located at (x,y,depth) mm
+       0.01            1.53             38.5   (  7.7,   0.0,  0.25)
+       0.10           13.77             50.8   (  7.5,   0.0,  0.25)
+       0.51           48.22             85.2   (  6.5,   0.0,  0.50)
+       1.00           78.82            115.8   (  6.5,   0.0,  0.50)
+       2.05          152.81            189.8   (  0.5,  -1.2,  1.50)
+       5.00          356.49            393.5   (  0.3,   0.0,  2.00)
+       9.75          557.56            594.6   (  0.3,   0.0,  2.00)
+      29.69          862.56            899.6   (  0.3,   0.0,  2.00)
+      61.22         1014.75           1051.7   (  0.3,   0.0,  2.00)
+     119.41         1119.64           1156.6   (  0.3,   0.0,  2.00)
+     307.63         1207.69           1244.7   (  0.3,   0.0,  2.00)
+     600.00         1231.94           1268.9   (  0.3,   0.0,  2.00)
+     steady         1238.78           1275.8   (  0.3,   0.0,  2.00)
+  hot spot on y = 0 at every output time: false
+  distinct hot-spot locations over the whole history: 9
+
+--- the same numbers WITHOUT the feed exclusion, for comparison ---
+  t =    1.0 s : Theta =     955.63 K at ( 0.00,  0.00,  0.25) mm
+  t =   61.2 s : Theta =    1477.73 K at ( 0.00,  0.00,  0.50) mm
+  steady     : Theta =    1534.83 K at ( 0.00,  0.00,  0.50) mm
+  ratio unrestricted / reported at steady state: 1.2 x
+  Everything quoted elsewhere uses the RESTRICTED peak.
+
+--- depth of the peak (the cooled-surface signature) ---
+  on the vertical x = 6 mm the steady peak is 4.25 mm BELOW the
+  surface, not at it: the blood pins z = 0 at 37 degC while the
+  deposition peaks at the surface, so the maximum is pushed inward.
+  Theta at the surface 0.000 K, at the peak 1101.36 K.
+
+--- where the heat goes ---
+  deposited in the block, total                 142.809 W
+  removed at once at the nodes pinned to 37 degC  10.540 W
+  left to heat the gel                          132.269 W
+  t =    0.00 s: stored    0.000 J, leaving   -0.000 W ( -0.0 % of input)
+  t =    1.00 s: stored  124.077 J, leaving   12.574 W (  9.5 % of input)
+  t =    9.75 s: stored 1051.132 J, leaving   34.866 W ( 26.4 % of input)
+  t =   61.22 s: stored 5054.348 J, leaving   67.706 W ( 51.2 % of input)
+  t =  600.00 s: stored 17447.904 J, leaving  126.187 W ( 95.4 % of input)
+  steady state : leaving  132.269 W (100.00 % of input) -- must be 100 %
+  coolant bulk temperature rise at 132.269 W removed: 0.383 K
+  (the brief says to ignore it; this confirms that is safe)
+
+--- generator power allowed, by exposure time and temperature limit ---
+  P_gen [W] such that the PEAK temperature just reaches the limit
+     t [s]      43 degC     50 degC     60 degC    100 degC
+         1      15.224      32.986      58.361     159.857
+         5       3.366       7.293      12.903      35.344
+        10       2.152       4.663       8.250      22.598
+        30       1.391       3.014       5.333      14.608
+        61       1.183       2.562       4.533      12.417
+       119       1.072       2.322       4.108      11.254
+       308       0.994       2.153       3.809      10.433
+       600       0.974       2.110       3.734      10.228
+    steady       0.969       2.099       3.713      10.171
+
+saved C:\Users\Tadhg Stuckey\OneDrive\Desktop\TABLE\BMET3921 - Biomedical Design and Technology\Edward\Heatmodel\results\heat_model.mat (68 MB)
+
+figures: design power = 12.417 W generator (9.313 W delivered)
+wrote 8 figures to Heatmodel/figures/
+
+
+########## the same model with a CONVECTIVE surface ##########
+
+=========== THERMAL MODEL ===========
+  gel: rho = 1000 kg/m^3, c = 4180 J/(kg K), k = 0.600 W/(m K)
+       alpha = 1.4354e-07 m^2/s -> diffusion length sqrt(4 a t) = 2.40 mm at 10 s
+  coolant: water at 37 degC, 5.00 L/min
+       U = 0.0926 m/s, Re_L = 3981, Re_Dh = 3981, Pr = 4.61
+       entrance lengths: hydrodynamic 5.97 m, thermal 27.52 m (both >> 30 mm, so the flat-plate estimate is the right one)
+       h: plate-lam 1460 | plate-turb 0 | duct-DB 673 | duct-lam 103 W/(m^2 K)
+       catheter: Re 199, h_out 6005, wall R 1.00e-03 -> h_eff 857 W/(m^2 K)
+       cooling length k_gel/h = 0.411 mm
+  boundary conditions: surface 'robin', catheter 'cooled', floor 'adiabatic', sides 'dirichlet'
+  ROI: x -9..21 mm, y -15..15 mm, depth 0..30 mm
+  power reference: P_gen = 200 W, eta = 0.750 -> P_del = 150 W
+EM solve 14.9 s
+
+--- microwave power deposition (at 150 W delivered) ---
+  sigma_eff                    2.7228 S/m
+  absorbed in the gel           149.586 W  (99.72 %)
+  inside the 30 x 30 x 30 mm block   141.677 W  (94.71 % of the gel total)
+  peak q                       7.710e+10 W/m^3  (SAR 7.710e+07 W/kg)
+
+--- the feed singularity ---
+  a point charge Q = I_m/omega sits at the feed because the
+  prescribed current is truncated there while still at maximum.
+  excluded from PEAK REPORTING: 2.0 mm sphere about (0,0,0), 1153 of 1771561 nodes
+  power inside that sphere: 21.526 W of 141.677 W in the block (15.19 %)
+  feed_fix = 'none' -> source left exactly as the field model gives it
+
+--- transient solve ---
+  grid 121 x 121 x 121 = 1.77 M nodes, dh = 0.250 mm
+  stability limit dt = 0.0603 s, using dt = 0.0543 s
+    t =    0.008 s   theta_max =     2.57 K   (39 steps, 6 s)
+    t =    0.077 s   theta_max =    20.63 K   (79 steps, 13 s)
+    t =    0.713 s   theta_max =    98.34 K   (119 steps, 19 s)
+    t =    6.605 s   theta_max =   551.92 K   (246 steps, 33 s)
+    t =   61.224 s   theta_max =  1460.43 K   (1272 steps, 115 s)
+    t =  567.512 s   theta_max =  1769.28 K   (10616 steps, 826 s)
+  11215 steps in 871 s wall time; energy-balance error 8.74e-04
+  steady state: pcg 609 iters, relres 9.9e-10, 76 s
+
+--- the scaling law ---
+  theta(r,t; P) = (P_delivered / 150 W) * Theta(r,t), exactly.
+  T(r,t) = 37 + eta * P_generator / 150 * Theta(r,t),  eta = 0.750
+
+--- peak temperature rise, at the reference 200 W generator power ---
+      t [s]     Theta_max [K]     T_max [degC]   located at (x,y,depth) mm
+       0.01            3.03             40.0   ( 10.0,   0.0,  0.00)
+       0.10           26.03             63.0   ( 10.0,   0.0,  0.00)
+       0.51           80.91            117.9   (  9.2,   0.0,  0.00)
+       1.00          119.02            156.0   (  7.5,   0.0,  0.25)
+       2.05          187.92            224.9   (  7.0,   0.0,  0.25)
+       5.00          428.45            465.5   (  1.0,   0.0,  1.75)
+       9.75          738.46            775.5   (  0.3,   0.0,  2.00)
+      29.69         1228.16           1265.2   (  0.3,   0.0,  2.00)
+      61.22         1460.43           1497.4   (  0.3,   0.0,  2.00)
+     119.41         1613.24           1650.2   (  0.3,   0.0,  2.00)
+     307.63         1737.31           1774.3   (  0.3,   0.0,  2.00)
+     600.00         1770.82           1807.8   (  0.3,   0.0,  2.00)
+     steady         1780.17           1817.2   (  0.3,   0.0,  2.00)
+  hot spot on y = 0 at every output time: false
+  distinct hot-spot locations over the whole history: 14
+
+--- the same numbers WITHOUT the feed exclusion, for comparison ---
+  t =    1.0 s : Theta =    3519.87 K at ( 0.00,  0.00,  0.00) mm
+  t =   61.2 s : Theta =    4941.86 K at ( 0.00,  0.00,  0.00) mm
+  steady     : Theta =    5022.41 K at ( 0.00,  0.00,  0.00) mm
+  ratio unrestricted / reported at steady state: 2.8 x
+  Everything quoted elsewhere uses the RESTRICTED peak.
+
+--- depth of the peak (the cooled-surface signature) ---
+  on the vertical x = 6 mm the steady peak is 3.50 mm BELOW the
+  surface, not at it: the blood pins z = 0 at 37 degC while the
+  deposition peaks at the surface, so the maximum is pushed inward.
+  Theta at the surface 571.307 K, at the peak 1277.76 K.
+
+--- where the heat goes ---
+  deposited in the block, total                 142.809 W
+  removed at once at the nodes pinned to 37 degC   0.185 W
+  left to heat the gel                          142.624 W
+  t =    0.00 s: stored    0.000 J, leaving   -0.000 W ( -0.0 % of input)
+  t =    1.00 s: stored  136.317 J, leaving    9.702 W (  6.8 % of input)
+  t =    9.75 s: stored 1173.144 J, leaving   33.691 W ( 23.6 % of input)
+  t =   61.22 s: stored 5634.520 J, leaving   70.770 W ( 49.6 % of input)
+  t =  600.00 s: stored 19422.200 J, leaving  135.865 W ( 95.3 % of input)
+  steady state : leaving  142.624 W (100.00 % of input) -- must be 100 %
+  coolant bulk temperature rise at 142.624 W removed: 0.413 K
+  (the brief says to ignore it; this confirms that is safe)
+
+--- generator power allowed, by exposure time and temperature limit ---
+  P_gen [W] such that the PEAK temperature just reaches the limit
+     t [s]      43 degC     50 degC     60 degC    100 degC
+         1      10.082      21.845      38.649     105.865
+         5       2.801       6.068      10.736      29.408
+        10       1.625       3.521       6.229      17.063
+        30       0.977       2.117       3.745      10.259
+        61       0.822       1.780       3.150       8.628
+       119       0.744       1.612       2.851       7.810
+       308       0.691       1.497       2.648       7.253
+       600       0.678       1.468       2.598       7.115
+    steady       0.674       1.461       2.584       7.078
+
+saved C:\Users\Tadhg Stuckey\OneDrive\Desktop\TABLE\BMET3921 - Biomedical Design and Technology\Edward\Heatmodel\results\heat_model_robin.mat (68 MB)
+
+case                                               Th(1s)  Th(10s) Th(120s)     Th_ss   hot spot (x,y,d) mm P100@60s
+------------------------------------------------------------------------------------------------------------------------
+A  baseline (surface pinned at 37 C)                 73.8    526.9   1076.8    1195.8   (  0.5, 0.0, 2.00)   13.029
+B  Robin surface, h = 1460 (plate laminar)          127.1    711.1   1521.6    1681.8   (  0.5, 0.0, 2.00)    9.201
+B  Robin surface, h =  673 (duct Dittus-Boelter)    159.7    805.0   1869.4    2081.5   (  0.5, 0.0, 2.00)    7.559
+B  Robin surface, h =  300                          179.9    890.1   2362.5    2698.6   (  0.5, 0.0, 2.00)    6.130
+B  Robin surface, h =  103 (laminar duct, worst)    192.1    983.3   3031.8    3720.1   (  0.5, 0.0, 2.00)    5.006
+B  Robin surface, h = 5000 (near-Dirichlet)          88.7    598.0   1228.7    1359.4   (  0.5, 0.0, 2.00)   11.386
+C  catheter cooled, h_cath = 857 (with h = 1460)    150.8    762.4   1648.6    1815.9   (  0.5, 0.0, 2.00)    8.473
+C  catheter INSULATING (with h = 1460)              198.3    924.5   2168.8    2370.6   (  0.5, 0.0, 2.00)    6.429
+C  catheter INSULATING (pinned surface)             196.0    848.5   1742.0    1884.7   (  0.5, 0.0, 2.00)    7.882
+D  floor held at 37 C (water-cooled dish)            73.8    526.9   1076.8    1195.0   (  0.5, 0.0, 2.00)   13.029
+E  ROI side walls adiabatic                          73.8    526.9   1077.6    1532.3   (  3.5, 0.0, 6.00)   13.028
+F  k_gel = 0.50 W/(m K)                              77.8    568.7   1262.0    1435.0   (  0.5, 0.0, 2.00)   11.266
+F  k_gel = 0.55 W/(m K)                              75.8    547.2   1162.0    1304.6   (  0.5, 0.0, 2.00)   12.149
+F  k_gel = 0.628 W/(m K) (pure water at 37 C)        72.8    516.0   1034.4    1142.5   (  0.5, 0.0, 2.00)   13.520
+G  c_gel = 4000 J/(kg K)                             76.1    539.6   1082.5    1195.8   (  0.5, 0.0, 2.00)   12.921
+G  muscle thermal properties                         85.0    613.8   1304.0    1464.3   (  0.5, 0.0, 2.00)   10.827
+H  gel permittivity taken at 37 C, not 25 C          76.6    554.9   1118.1    1235.7   (  0.5, 0.0, 2.00)   12.502
+I  feed exclusion radius 1 mm                       263.6    862.0   1159.5    1246.3   (  0.0, 0.0, 1.50)   11.407
+I  feed exclusion radius 3 mm                        73.8    326.1    984.8    1173.6   (  3.0, 0.0, 4.00)   15.203
+I  feed source regularised (capped on 2 mm shell)     73.8    453.5    971.2    1158.5   (  3.0, 0.0, 4.00)   14.589
+J  ROI 20 mm wide                                    73.8    526.8   1043.6    1099.0   (  0.5, 0.0, 2.00)   13.199
+J  ROI 40 mm wide                                    73.8    526.9   1077.3    1220.4   (  0.5, 0.0, 2.00)   13.028
+
+--- K  temperature-dependent gel properties (breaks linearity) ---
+  The Stogryn model for 0.9 % saline at 2.45 GHz gives
+  sigma_eff = 2.782 S/m at 37 C rising to 3.18 at 60 C (+0.62 %/K) and
+  eps'' falling at -0.38 %/K.  Re-running with q scaled pointwise by
+  sigma(T)/sigma(37) (|E|^2 held fixed) bounds the error in the exact
+  power scaling that T_gel relies on.
+  P_gen =   5.0 W : T_max(60 s) linear   61.18 C, temperature-dependent   63.99 C  (+11.65 %)
+  P_gen =  10.0 W : T_max(60 s) linear   85.36 C, temperature-dependent   92.56 C  (+14.90 %)
+  P_gen =  20.0 W : T_max(60 s) linear  133.71 C, temperature-dependent  135.49 C  (+1.84 %)
+
+
+wrote results/heat_sensitivity_log.txt and figures/fig9_sensitivity.png
+
+
+########## the deliverable, T_gel ##########
+  T_gel(P, t)                peak temperature in the block
+  T_gel(P, t, x, z)          on the y = 0 plane
+  T_gel(P, t, x, y, z)       anywhere in the block
+
+   P_gen[W]   t[s]      T_peak[C]   T(6,0,-2mm)[C]   T(6,0,-10mm)[C]
+       5.0    1.0         38.98          37.90            37.09
+       5.0   10.0         51.13          44.39            37.86
+       5.0   60.0         62.27          54.22            42.27
+      10.0    1.0         40.95          38.80            37.17
+      10.0   10.0         65.25          51.78            38.72
+      10.0   60.0         87.55          71.43            47.54
+      20.0    1.0         44.91          40.60            37.34
+      20.0   10.0         93.50          66.57            40.44
+      20.0   60.0        138.09         105.87            58.09
+      50.0    1.0         56.77          45.99            37.86
+      50.0   10.0        178.26         110.91            45.59
+      50.0   60.0        289.74         209.17            89.72
+
+  steady state:
+       5.0    Inf         67.97          60.50            56.27
+      10.0    Inf         98.94          84.00            75.54
+      20.0    Inf        160.88         130.99           114.08
+
+  off the y = 0 plane, at t = 60 s, P = 10 W:
+   y =  0.0 mm : T(6mm, y, -2mm) = 71.36 C
+   y =  1.0 mm : T(6mm, y, -2mm) = 69.63 C
+   y =  2.0 mm : T(6mm, y, -2mm) = 65.52 C
+   y =  5.0 mm : T(6mm, y, -2mm) = 52.12 C
+
+  thermal dose and flags, 60 s at 12 W:
+   T_peak(60 s) = 97.66 C, CEM43 = 3.153e+15 equivalent minutes
+   hot spot at (0.25, 0.00, -2.00) mm
+   flag: T exceeds 60 degC: permittivity/conductivity drift ~10 %, power scaling no longer exact
+   flag: T exceeds 50 degC: check the gel-sol transition of the Phytagel itself
+   flag: surface pinned at 37 degC: this is a LOWER BOUND on temperature
+
+  inverse functions:
+   P_for_T(100 degC,     1 s) =  159.346 W generator
+   P_for_T(100 degC,    10 s) =   22.300 W generator
+   P_for_T(100 degC,    60 s) =   12.464 W generator
+   P_for_T(100 degC,   Inf s) =   10.171 W generator
+   time_to_T( 10 W, 100 degC) =      Inf s
+   time_to_T( 20 W, 100 degC) =   12.436 s
+   time_to_T( 50 W, 100 degC) =    3.386 s
+   time_to_T(100 W, 100 degC) =    1.704 s
+
+  pulsed drive, 30 % duty at 1 Hz, 60 s, same average power:
+   CW at 12.46 W                 -> T_peak = 100.00 C
+   41.55 W at 30 % duty (same mean) -> T_peak = 102.15 C
+
+
+ALL DONE in 35.8 min
+
+
+########## extra diagnostics ##########
+
+--- temperature rise per watt of GENERATOR power ---
+  1 s      :   0.394 K/W  (peak)
+  10 s     :   2.788 K/W  (peak)
+  60 s     :   5.074 K/W  (peak)
+  120 s    :   5.598 K/W  (peak)
+  steady   :   6.194 K/W  (peak)
+
+--- time to reach a temperature, at the field model reference 200 W ---
+   43 degC :    0.040 s
+   50 degC :    0.095 s
+   60 degC :    0.191 s
+  100 degC :    0.722 s
+
+--- Dirichlet (as specified) vs the convective surface it stands for ---
+   t [s]   Theta_max Dirichlet   Theta_max Robin(h=1460)   ratio   P100 D / P100 R
+       1                78.8                    119.0    1.51   159.86 / 105.86 W
+      10               557.6                    738.5    1.32    22.60 / 17.06 W
+      61              1014.7                   1460.4    1.44    12.42 / 8.63 W
+     119              1119.6                   1613.2    1.44    11.25 / 7.81 W
+     600              1231.9                   1770.8    1.44    10.23 / 7.12 W
+  steady              1238.8                   1780.2    1.44    10.17 / 7.08 W
+  surface rise at x = 6 mm, steady state: Dirichlet 0 K by construction,
+  convective 571.3 K per 150 W delivered = 2.86 K per generator watt.
+  That film resistance is exactly what the Dirichlet condition throws away.
+
+--- lesion size, 60 s exposure ---
+  The y = 0 plane is masked to exclude the 2 mm feed sphere, so these
+  dimensions describe the zone the RADIATING ELEMENT produces.
+  P_gen =  6.21 W (T_peak =   68.5 degC):
+     CEM43 >= 240 min : depth 5.75 mm, x from -2.0 to 8.7 mm (width 10.7 mm)
+     CEM43 >=  60 min : depth 6.50 mm, x from -2.2 to 9.5 mm (width 11.7 mm)
+     T >=  43 degC     : depth 10.50 mm, x from -4.2 to 12.2 mm
+     T >=  50 degC     : depth 7.25 mm, x from -2.5 to 10.0 mm
+     T >=  60 degC     : depth 4.00 mm, x from -1.2 to 5.0 mm
+  P_gen =  9.31 W (T_peak =   84.3 degC):
+     CEM43 >= 240 min : depth 7.75 mm, x from -2.7 to 10.7 mm (width 13.5 mm)
+     CEM43 >=  60 min : depth 8.25 mm, x from -3.2 to 11.0 mm (width 14.2 mm)
+     T >=  43 degC     : depth 12.25 mm, x from -5.0 to 13.2 mm
+     T >=  50 degC     : depth 9.00 mm, x from -3.5 to 11.2 mm
+     T >=  60 degC     : depth 6.25 mm, x from -2.0 to 9.2 mm
+  P_gen = 12.42 W (T_peak =  100.0 degC):
+     CEM43 >= 240 min : depth 9.00 mm, x from -3.5 to 11.5 mm (width 15.0 mm)
+     CEM43 >=  60 min : depth 9.50 mm, x from -3.7 to 11.7 mm (width 15.5 mm)
+     T >=  43 degC     : depth 13.50 mm, x from -5.7 to 14.0 mm
+     T >=  50 degC     : depth 10.25 mm, x from -4.0 to 12.2 mm
+     T >=  60 degC     : depth 7.75 mm, x from -2.7 to 10.5 mm
+
+--- how fast the peak equilibrates ---
+  t =     1 s : 6.4 % of the steady-state rise
+  t =    10 s : 45.0 % of the steady-state rise
+  t =    30 s : 69.6 % of the steady-state rise
+  t =    61 s : 81.9 % of the steady-state rise
+  t =   119 s : 90.4 % of the steady-state rise
+  t =   308 s : 97.5 % of the steady-state rise
+  t =   600 s : 99.4 % of the steady-state rise
+
+--- pulsed drive at a fixed mean power (60 s, mean = P100@60s) ---
+  CW at 12.42 W                        -> T_peak =  99.76 degC
+   50.0 % duty at 1.000 Hz ( 24.83 W peak) -> T_peak = 100.55 degC
+   50.0 % duty at 0.100 Hz ( 24.83 W peak) -> T_peak = 112.93 degC
+   50.0 % duty at 0.020 Hz ( 24.83 W peak) -> T_peak = 138.88 degC
+   30.0 % duty at 1.000 Hz ( 41.39 W peak) -> T_peak = 101.91 degC
+   30.0 % duty at 0.100 Hz ( 41.39 W peak) -> T_peak = 117.05 degC
+   30.0 % duty at 0.020 Hz ( 41.39 W peak) -> T_peak = 178.51 degC
+   10.0 % duty at 1.000 Hz (124.17 W peak) -> T_peak = 102.13 degC
+   10.0 % duty at 0.100 Hz (124.17 W peak) -> T_peak = 118.82 degC
+   10.0 % duty at 0.020 Hz (124.17 W peak) -> T_peak = 269.67 degC
+
+--- depth of the 43 and 50 degC isotherms under the element, 60 s ---
+  P_gen =  5.00 W : T(surface..) peak   54.8 degC, 43 degC to  9.52 mm, 50 degC to  5.70 mm
+  P_gen = 10.00 W : T(surface..) peak   72.7 degC, 43 degC to 12.56 mm, 50 degC to  9.16 mm
+  P_gen = 12.42 W : T(surface..) peak   81.3 degC, 43 degC to 13.56 mm, 50 degC to 10.12 mm
+  P_gen = 20.00 W : T(surface..) peak  108.4 degC, 43 degC to 15.86 mm, 50 degC to 12.20 mm
+  P_gen = 50.00 W : T(surface..) peak  215.5 degC, 43 degC to 20.22 mm, 50 degC to 16.54 mm
+
+
+########## corrected validation tests 4, 6, 7, 9 ##########
+
+================ VALIDATION OF THE THERMAL MODEL ================
+
+--- TEST 4: operator symmetry and steady vs long transient ---
+  <Au,v> - <u,Av> = 2.384e-07 (relative 2.301e-16)
+  <u,Au> = 1.4991e+11  (must be > 0)
+  steady peak 1118.196 K vs transient at t = 20000 s peak 1118.196 K (0.00 %)
+  deposited in the block 169.0309 W, of which 58.8270 W lands on pinned nodes
+  steady-state balance: P_in(free) 110.2039 W  P_loss 110.2039 W  err 1.77e-13
+
+--- TEST 6: grid convergence of the full problem (t = 30 s) ---
+   Two columns behave quite differently and that is the point: the
+   UNRESTRICTED peak sits on the feed singularity and diverges under
+   refinement, while a probe 6 mm away converges at second order.
+     dh[mm]   nodes        peak(all)  peak(feed excl)  theta(6,0,-2mm)   P_in[W]
+    1.000    31x 31x 31       896.65         693.71          506.637   110.204
+    0.500    61x 61x 61      1228.82         820.89          532.706   124.267
+    0.250   121x121x121      1437.14         865.02          539.420   132.269
+   Repeating with the feed source capped (feed_fix = 'cap'):
+    1.000    31x 31x 31       851.14         687.82          506.575   110.073
+    0.500    61x 61x 61       771.08         722.86          531.900   120.746
+    0.250   121x121x121       731.64         701.87          538.152   124.635
+
+--- TEST 7: time-step convergence (dh = 0.5 mm, t = 30 s) ---
+   CFL 0.900  dt = 0.2612 s     279 steps  theta_max = 820.7132 K  energy err 1.86e-03
+   CFL 0.450  dt = 0.1306 s     388 steps  theta_max = 820.1738 K  energy err 1.35e-03
+   CFL 0.225  dt = 0.0653 s     611 steps  theta_max = 819.8769 K  energy err 9.31e-04
+   (the energy error is the closure of dU/dt = P_in - P_loss integrated
+    over the run; it is limited by the trapezoid used on P_loss between
+    output times, not by the solver, so it falls with more output times)
+
+--- TEST 9: thermal dose against hand calculation ---
+  43 degC held for 10 min                      10  expected           10  rel 8.9e-16
+  33 degC held for 10 min              9.5367e-06  expected   9.5367e-06  rel 8.9e-16
+  53 degC held for 1 min                     1024  expected         1024  rel 4.0e-15
+  60 degC held for 1 min               1.3107e+05  expected   1.3107e+05  rel 4.0e-15
+  R = 0.5 above 43 degC and 0.25 below, so each degree above 43
+  doubles the dose and each degree below quarters it.
+
+================ END VALIDATION ================
+

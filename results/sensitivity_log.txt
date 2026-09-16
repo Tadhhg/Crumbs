@@ -1,0 +1,23 @@
+
+case                                   Rin[ohm]   %gel     E@2mm    E@10mm    E@25mm  z1e[mm]
+--------------------------------------------------------------------------------------------
+A baseline: sinusoid, L = lambda_e/4      18.6   99.7    7639.1    2337.0     430.8     2.66
+A sinusoid, bare wire on interface        41.9   99.8    8294.1    2227.0     373.9     2.97
+A sinusoid, wire sees air only            12.9   99.7    7590.1    2258.0     418.9     2.36
+A uniform current                         38.8   99.7    7015.5    2450.5     463.8     4.01
+A triangular current                      12.2   99.7    7578.3    2243.6     416.6     2.32
+B standoff h = 0.10 mm                    33.6   99.9    6608.5    1876.9     337.0     0.84
+B standoff h = 0.25 mm                    24.3   99.8    7328.2    2144.3     388.9     1.51
+B standoff h = 1.00 mm                    13.4   99.6    7594.8    2502.9     476.2     4.40
+B standoff h = 2.00 mm                     8.4   99.2    7165.5    2640.1     532.7     6.57
+B standoff h = 5.00 mm                     3.3   95.0    5785.0    2604.9     608.1     9.90
+C 1.1 pct NaCl, 25 C                      18.8   99.7    7498.4    2162.4     359.0     2.59
+C 0.9 pct NaCl, 20 C                      18.5   99.7    7623.3    2332.9     431.4     2.69
+C 0.9 pct NaCl, 37 C                      18.8   99.7    7598.8    2250.5     389.6     2.55
+C muscle-equivalent target                18.8   99.6    8126.1    2578.5     464.8     2.09
+C pure water (no salt), 25 C              17.7   99.7    8358.3    3394.7    1007.5     3.16
+D gel depth 20 mm                         18.2   99.6    7603.6    2187.0    1340.5     2.59
+D gel depth 40 mm                         18.5   99.7    7634.5    2327.0     502.4     2.65
+E metal (PEC) dish under gel              18.4   99.7    7628.8    2310.3     579.5     2.64
+
+saved results/sensitivity.mat

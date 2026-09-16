@@ -1,0 +1,70 @@
+
+================ VERIFY_GUI_MODEL ================
+
+--- 1. against the stored baseline, Dirichlet surface ---
+  peak  at 60 s : stored    97.88   fast    97.61 degC   (-0.27 K, -0.44 % of rise)
+  probe (6,0,-2): stored    78.56   fast    78.12 degC   (-0.44 K, -1.06 % of rise)
+  solved in 4.5 s, against a quarter-hour solve for the stored one
+
+--- 2. against the stored baseline, Robin surface ---
+  peak  at 60 s : stored   124.63   fast   123.80 degC   (-0.82 K, -0.94 % of rise)
+  probe (6,0,-2): stored    88.65   fast    86.67 degC   (-1.98 K, -3.84 % of rise)
+  solved in 4.9 s, against a quarter-hour solve for the stored one
+
+--- 3. grid convergence ---
+  dh = 1.00 mm : peak   138.85 degC   probe   86.28 degC   (1.1 s)
+  dh = 0.50 mm : peak   123.80 degC   probe   86.67 degC   (5.0 s)
+  dh = 0.25 mm : peak   122.81 degC   probe   86.93 degC   (89.0 s)
+  probe changes 0.52 % of its rise over the last refinement
+  peak changes  1.15 % -- expected NOT to converge (feed charge, Sec. 6.2)
+
+--- 4. FFT window ---
+  peak SAR   512: 8.6459e+04   1024: 8.5857e+04 W/kg
+  worst SAR difference anywhere on the plane 0.771 % of the peak
+  probe temperature differs by 0.061 % of its rise (1.8 s vs 7.4 s)
+
+--- 5. linearity in the delivered power ---
+  theta(20 W) vs 4 x theta(5 W): worst relative difference 0.00e+00
+
+--- 6. superposition of the initial condition ---
+  combined vs driven + relaxation: worst relative difference 3.20e-08
+  (relaxation alone has fallen to 11.985 K at 60 s)
+
+--- 7. the energy audit ---
+  output-time refinement (theta0 = 0, dt = 0.186 s):
+     41 output times : max 4.70e-03   at the final time 4.41e-04
+    161 output times : max 1.89e-03   at the final time 9.12e-04
+    641 output times : max 8.16e-04   at the final time 7.03e-04
+  time step 0.1859 s -> final-time balance 4.41e-04
+  time step 0.0929 s -> final-time balance 9.59e-05   (ratio 4.60)
+
+--- 8. the swept parameters move the answer, the right way ---
+  (h goes 1460 -> 1522 W/(m^2 K) over that change)
+  flow 1 -> 20 L/min       93.676 ->   85.870  (expected down)   PASS
+  catheter 0 -> 32 mm      86.668 ->   88.644  (expected up  )   PASS
+  water 37 -> 47 degC, rise   50.965 ->   50.767  (expected down)   PASS
+  sigma 1.5 -> 4.0 S/m      0.630 ->    0.602  (expected down)   PASS
+
+================ SUMMARY ================
+  test 1  Dirichlet surface: probe                        1.06 <= 8      %  PASS
+  test 2  Robin surface: probe                            3.84 <= 8      %  PASS
+  test 3  grid convergence of the probe point            0.524 <= 5      %  PASS
+  test 4  Nfft 512 vs 1024, probe                       0.0613 <= 1      %  PASS
+  test 5  exact power scaling                                0 <= 1e-10  -  PASS
+  test 6  initial-condition superposition              3.2e-08 <= 1e-06  -  PASS
+  test 7  energy balance at the final time            0.000441 <= 0.002  -  PASS
+  test 7  it is first order in dt (ratio >= 1.7)          0.37 <= 1      -  PASS
+  test 8  flow 1 -> 20 L/min                                              PASS
+  test 8  catheter 0 -> 32 mm                                             PASS
+  test 8  water 37 -> 47 degC, rise                                       PASS
+  test 8  sigma 1.5 -> 4.0 S/m                                            PASS
+
+  ALL TESTS PASSED
+
+
+ans =
+
+  logical
+
+   1
+

@@ -1,0 +1,195 @@
+PHYTAGEL HEAT GUI  --  v2.1
+2.45 GHz monopole on a Phytagel phantom, with the antenna IN THE BATH.
+
+You need MATLAB (R2022b or newer) already installed. Nothing else --
+no toolboxes, no downloads, no commands to type.
+
+
+-------------------------------------------------------------------------
+WHAT IS DIFFERENT FROM v1
+-------------------------------------------------------------------------
+
+v1 solved the antenna radiating into AIR above the gel. Photographs of the
+50 W bench run show it FULLY IMMERSED. Because the bath has almost the
+same permittivity as the gel, the interface nearly disappears
+electrically and most of the power goes UP INTO THE BATH instead of down
+into the gel.
+
+                            into the gel     into the bath
+    v1  air above               99.6 %            0 %
+    v2  tap/deionised bath      46.4 %           51.3 %
+    v2  0.9 % saline bath       39.2 %           60.7 %
+
+So v1 over-predicted the heating badly. On the photographed run
+(50 W, 6 min) v1 said the peak hit 475 C; v2 says 171-185 C.
+
+BE HONEST ABOUT WHAT THIS FIXES. v2 removes about 2.8x of the error and
+no more. 171 C still boils, and the photographed gel plainly did not.
+The rest must come from things v2 does not model -- above all how much
+power actually leaves the generator and reaches the antenna, which was
+assumed (75 %) and never measured. See "What changed in v2.md".
+
+
+-------------------------------------------------------------------------
+WHAT v2.1 ADDED
+-------------------------------------------------------------------------
+
+1. THE GREY WEDGE IS GONE.
+
+   Both maps used to have a grey semicircle punched out of them at the
+   feed, because the model's antenna current stopped dead there and the
+   deposition went infinite. The photographs show nothing like it: the
+   gel there is heated smoothly, the hottest part sits a couple of
+   millimetres along and a couple down, and the heated blob reaches BACK
+   past the junction under the braid.
+
+   The current does not stop at the feed. It RETURNS along the outside of
+   the bare braid -- there is no ground plane and no balun on that bench,
+   so the thing is a dipole whose second arm is the coax. Model that and
+   there is no point charge, nothing has to be blanked, and the peak the
+   window reports is a real prediction instead of the value on the edge
+   of an arbitrary sphere. It also stops depending on the grid: 1.2 %
+   across three grid sizes, against 32 % before.
+
+   New control:  Feed (the coax braid) -> braid arm (mm), 12 mm default.
+   Set it to 0 for the old truncated current, grey wedge and all; the
+   "v1/v2 feed" preset does exactly that.
+
+   On the photographed run the peak goes from 185 C to 151 C. It still
+   boils. Point 1 above is still the thing to go and measure.
+
+2. PULSING.
+
+   New controls:  drive (continuous / pulsed), pulse period, duty cycle.
+
+   The power box is then the power DURING a pulse; the mean is duty times
+   that, and the line above the maps gives both. Compare pulsed against
+   continuous at equal MEAN power, never at equal generator power.
+
+   Watch the second number in that line. A slow pulse train can finish
+   deep in an off-period, so the temperature at the end of the run is not
+   the worst the gel saw -- 50 W at 50 % duty on a 30 s period reads
+   72 C at the end and 102 C at its worst.
+
+   Slow pulsing at a fixed mean power is strictly worse than continuous.
+   That is not a quirk of this window; it is what the heat write-up
+   already said, and it is now something you can watch happen.
+
+3. THE TIME BAR IS LINEAR IN SECONDS.
+
+   It used to be an index into a log-spaced list of times, so a quarter
+   of its travel covered the first second of a sixty second run and the
+   rest covered the other fifty-nine. The frames are now on a round fixed
+   increment -- 2 s for a 60 s run, 10 s for six minutes -- and the bar
+   is labelled in seconds. Half way along is half way through.
+
+
+-------------------------------------------------------------------------
+PICK ONE OF THESE TWO. Either works.
+-------------------------------------------------------------------------
+
+  (1) INSTALL IT PROPERLY  -- recommended
+
+      Double-click        Phytagel Heat GUI v2.mltbx
+
+      MATLAB opens and asks to install. Click Install.
+      The GUI then lives in MATLAB's APPS tab: click APPS, then the
+      button labelled  heat_gui .
+
+      NOTE. This installs as version 2.0.0 of the SAME add-on as v1, so
+      it REPLACES v1 rather than sitting beside it. That is deliberate:
+      the two share every function name, and having both on the path at
+      once would silently run whichever came first. You lose nothing --
+      set "above the gel" to "air" in the window and you have v1 back,
+      exactly.
+
+  (2) JUST OPEN IT, DON'T INSTALL ANYTHING
+
+      Windows:  double-click   Open the GUI (Windows).bat
+      Mac:      double-click   Open the GUI (Mac).command
+
+      Installs nothing and touches nothing. This is also the way to run
+      v1 and v2 side by side if you really want both at once.
+
+
+Either way the window takes about 30 seconds to appear the first time.
+
+
+-------------------------------------------------------------------------
+THE NEW CONTROLS
+-------------------------------------------------------------------------
+
+A "Bath (what the antenna sits in)" section (v2):
+
+  above the gel      water (v2)  or  air (v1 behaviour)
+  bath salt (% w/v)  0 = deionised or tap, 0.9 = physiological saline
+
+The bath salinity of the real experiment was never measured, so try
+both. It matters less than you would expect: pure water is ALREADY
+lossy at 2.45 GHz (that is how a microwave oven works), so the two ends
+give 46 % and 39 % into the gel -- close enough that not knowing does
+not change the conclusion.
+
+Under the maps there is now a "bath" line saying how much of the
+delivered power went up into the bath instead of into the gel.
+
+
+-------------------------------------------------------------------------
+CHECKING IT YOURSELF
+-------------------------------------------------------------------------
+
+In MATLAB, from the code folder:
+
+    verify_v2             the checks, about 2 minutes
+    run_v2_comparison     the version-by-version table, about 100 s
+
+The checks are worth knowing about, because two of them failed when
+first written and that is how the bugs were caught:
+
+  1  tangential E continuous across the gel surface     1.6e-17
+  2  "air" reproduces v1 to machine precision           exact
+  3  the result does not depend on how deep a bath
+     column is integrated                               drift 5e-8
+  4  the power budget closes                            exact
+  5  in a uniform medium with the wire on the surface,
+     equal power above and below                        1.000000
+  6  the size of the point charge at the feed, read
+     straight off the spectral tail                     1.0014 -> 0.0136
+     ... and the peak temperature, over three grids     32 % -> 1.2 %
+  7  pulsing delivers exactly the energy it claims,
+     for periods from 0.2 s to 30 s                     1.9e-14
+
+
+-------------------------------------------------------------------------
+STILL TRUE FROM v1
+-------------------------------------------------------------------------
+
+Compare a thermocouple against the PROBE POINT. The peak is now a real
+prediction rather than an artefact, but it is still 3 mm below the
+surface next to the feed junction, which is not somewhere you can put a
+thermocouple.
+
+Do not put a probe within 2 mm of the feed. Put it under the middle of
+the element, around x = 6 mm.
+
+"How to use the GUI.md" documents every control -- its temperatures are
+v1 numbers and read high; the preset table in it has been updated to
+v2.1, the rest has not.
+
+
+-------------------------------------------------------------------------
+IF YOU CHANGE THE MODEL
+-------------------------------------------------------------------------
+
+Run  build_mltbx  (it sits beside this file) to repackage code/ into the
+.mltbx. The .mltbx is a COPY, so without a rebuild anyone installing it
+gets the old model while anyone using the .bat gets the new one, and
+nothing in the window would say so.
+
+
+-------------------------------------------------------------------------
+TO UNINSTALL (route 1 only)
+-------------------------------------------------------------------------
+
+In MATLAB: HOME tab -> Add-Ons -> Manage Add-Ons -> Phytagel Heat GUI
+-> the three dots -> Uninstall.

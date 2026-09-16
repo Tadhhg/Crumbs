@@ -1,0 +1,95 @@
+PHYTAGEL HEAT GUI
+2.45 GHz monopole on a Phytagel phantom -- where the microwave power goes,
+and how hot the gel gets.
+
+You need MATLAB (R2022b or newer) already installed. Nothing else --
+no toolboxes, no downloads, no commands to type.
+
+
+-------------------------------------------------------------------------
+PICK ONE OF THESE TWO. Either works.
+-------------------------------------------------------------------------
+
+  (1) INSTALL IT PROPERLY  -- recommended
+
+      Double-click        Phytagel Heat GUI.mltbx
+
+      MATLAB opens and asks to install. Click Install.
+      From then on the GUI lives in MATLAB's APPS tab, at the top of the
+      window: click APPS, then click the button labelled   heat_gui
+      (that is the file's own name; the add-on itself is listed as
+      "Phytagel Heat GUI" under Manage Add-Ons).
+
+      It stays there. You never need this folder again, and you never
+      need to find it or set a path.
+
+
+  (2) JUST OPEN IT, DON'T INSTALL ANYTHING
+
+      Windows:  double-click   Open the GUI (Windows).bat
+      Mac:      double-click   Open the GUI (Mac).command
+
+      This starts MATLAB and opens the GUI for you. Keep the whole folder
+      together -- the launcher needs the "code" folder beside it.
+
+
+Either way the window takes about 30 seconds to appear the first time.
+It runs a full solve before it draws anything, so it opens with the maps
+already on screen instead of blank. That is normal, not a hang.
+
+
+-------------------------------------------------------------------------
+WHAT YOU GET WHEN IT OPENS
+-------------------------------------------------------------------------
+
+Two maps side by side:
+
+  left    where the microwave power goes (SAR)
+  right   how hot the gel gets
+
+and one sentence above them telling you the answer in words.
+
+It opens on 50 W continuous with room-temperature coolant -- gel and water
+both at 25 C, 60 s. Move any slider and both maps redraw themselves, in
+about a second for power or time, about five if you changed the gel.
+
+There is no "run" button to press and no pulsing: the drive is continuous.
+
+READ THIS BEFORE QUOTING ANY NUMBER: 50 W is far more power than this
+phantom can absorb. The peak passes 43 C after 0.33 s and 100 C after
+4.5 s, so the 60 s figure the window reports is a warning, not a real
+temperature -- the model has no boiling in it. Drag the exposure time
+down to a few seconds for something physical, or pick "bench baseline"
+from the drop-down for the gentler 12 W case with 37 C blood.
+
+Compare a thermocouple against the PROBE POINT number, never the peak.
+"How to use the GUI.md" explains why, and documents every control.
+
+
+-------------------------------------------------------------------------
+IF SOMETHING GOES WRONG
+-------------------------------------------------------------------------
+
+"Could not find MATLAB"
+      MATLAB is not installed, or not where the launcher looked. Open
+      MATLAB yourself, then use route (1) above instead.
+
+Double-clicking the .command does nothing (Mac)
+      macOS has not marked it runnable. Open Terminal, type  chmod +x
+      followed by a space, drag the .command file into the window, and
+      press Return. Then double-click it again.
+
+"Undefined function 'heat_gui'"
+      The folder was split up. Copy the WHOLE folder, not just the files
+      that looked important.
+
+The window is bigger than the screen
+      It sizes itself when it opens. Close it and open it again.
+
+
+-------------------------------------------------------------------------
+TO UNINSTALL (route 1 only)
+-------------------------------------------------------------------------
+
+In MATLAB: HOME tab -> Add-Ons -> Manage Add-Ons -> Phytagel Heat GUI
+-> the three dots -> Uninstall.

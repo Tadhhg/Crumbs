@@ -1,0 +1,1 @@
+This one is for modelling just the gel scenario, it'll later be adapted to model more complex geometries. For now it's simply a test of convection modelling, potentially may add some CFD to it but the computation time makes this likely non practical. 

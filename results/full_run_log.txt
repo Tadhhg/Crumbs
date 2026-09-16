@@ -1,0 +1,110 @@
+
+================ VALIDATION OF layered_field.m ================
+
+--- TEST 1: homogeneous limit vs analytic Hertzian dipole ---
+  vertical line x=y=0         max rel err = 1.432e-04   (rms 5.171e-05)
+  line along x, z=-5 mm       max rel err = 1.276e-03   (rms 7.369e-04)
+  line along y, x=0           max rel err = 2.373e-03   (rms 1.370e-03)
+  diagonal x=y line           max rel err = 2.373e-03   (rms 1.370e-03)
+
+--- TEST 2/3: grid and window convergence (full 3-layer problem) ---
+  N=1024 dx=0.250 mm  win=+-128.0 mm | Pgel=  7.45 Pup=  0.01 Pdn= 0.00 W | |E| probes  15610.2   6657.5   1724.7 V/m (dev  0.00%)
+  N=2048 dx=0.250 mm  win=+-256.0 mm | Pgel=  7.45 Pup=  0.02 Pdn= 0.00 W | |E| probes  15611.6   6660.2   1727.1 V/m (dev  0.14%)
+  N=2048 dx=0.125 mm  win=+-128.0 mm | Pgel=  7.45 Pup=  0.01 Pdn= 0.00 W | |E| probes  15610.2   6657.5   1724.7 V/m (dev  0.00%)
+  N=1536 dx=0.200 mm  win=+-153.6 mm | Pgel=  7.45 Pup=  0.02 Pdn= 0.00 W | |E| probes  15613.1   6661.8   1728.9 V/m (dev  0.25%)
+
+--- TEST 4: deep-field decay vs plane-wave attenuation ---
+  plane-wave alpha       =   58.98 Np/m  (skin depth 16.95 mm)
+  numerical decay 12-22mm=   94.23 Np/m  (includes 1/r spreading)
+  ratio                  =   1.598  (expect >1: geometric spreading adds)
+
+--- TEST 5: power budget closure ---
+  Pgel+Pup+Pdn = 150.000000 W ; normalisation target Pdel = 150.000000 W
+  fractions: gel 99.8%  up(air) 0.2%  through-bottom 0.0%
+
+================ END VALIDATION ================
+
+
+=========== BASELINE MODEL ===========
+  f = 2.450 GHz | L = 12.0 mm | gel depth = 30.0 mm | h = 0.50 mm
+  P_fwd = 200 W, P_ref(max) = 50 W -> P_delivered = 150 W
+  current: sinusoid, k_e case 'quarterwave' -> k_e = 130.9 rad/m (L = 0.250 lambda_e)
+  grid: N = 1024, dx = 0.250 mm (window +-128 mm), dz = 0.250 mm
+solver time 15.3 s
+
+--- medium ---
+  eps_r(gel)      = 74.290 - j19.977  (tan d = 0.2689)
+  sigma_eff       = 2.723 S/m
+  alpha           = 58.98 Np/m  -> field skin depth  16.95 mm
+                                   power  1/e depth  8.48 mm
+  beta            = 446.49 rad/m -> wavelength in gel 14.07 mm
+  L / lambda_gel  = 0.853
+
+--- power budget (delivered 150 W) ---
+  absorbed in gel          149.58 W  ( 99.7 %)
+  radiated up into air       0.39 W  (  0.3 %)
+  out through the bottom     0.03 W  (  0.0 %)
+  antenna current amplitude I_m = 4.019 A, feed current 4.019 A
+  implied input RESISTANCE R_in = 18.6 ohm  -> |Gamma| >= 0.458 (X_in=0)
+  (generator spec P_ref/P_fwd = 0.25 -> |Gamma| = 0.50)
+
+--- E-field (RMS) at reference points, y = 0 ---
+     x[mm] depth[mm]   E_rms[V/m]  E_peak[V/m]  SAR[W/kg]   axial ratio
+      6.0      0.5      13966.8      17342.2    531144.4         0.545
+      6.0      2.0       7639.1       9457.2    158892.2         0.552
+      6.0      5.0       4402.6       5970.1     52775.6         0.296
+      6.0     10.0       2337.0       3283.4     14871.4         0.115
+      6.0     20.0        689.8        975.2      1295.5         0.025
+      6.0     29.0        496.4        701.8       670.9         0.023
+      0.0      5.0       4043.0       4910.7     44507.8         0.596
+     12.0      5.0       2074.8       2343.9     11721.0         0.753
+     25.0      5.0         96.8        102.6        25.5         0.883
+     50.0      5.0         13.9         19.0         0.5         0.248
+
+--- penetration on the vertical x = 6.0 mm ---
+  E_rms at 0.125 mm depth = 17374 V/m
+  depth where E falls to 1/e  of surface value : 2.66 mm
+  depth where E falls to 1/10 of surface value : 12.09 mm
+  E_rms at the gel floor (z = -30 mm)         : 524.2 V/m (3.02 % of surface)
+  share of y=0-plane power deposition above 10 mm depth: 96.4 %
+
+saved results/field_model.mat
+wrote 8 figures to figures/
+
+case                                   Rin[ohm]   %gel     E@2mm    E@10mm    E@25mm  z1e[mm]
+--------------------------------------------------------------------------------------------
+A baseline: sinusoid, L = lambda_e/4      18.6   99.7    7639.1    2337.0     430.8     2.66
+A sinusoid, bare wire on interface        41.9   99.8    8294.1    2227.0     373.9     2.97
+A sinusoid, wire sees air only            12.9   99.7    7590.1    2258.0     418.9     2.36
+A uniform current                         38.8   99.7    7015.5    2450.5     463.8     4.01
+A triangular current                      12.2   99.7    7578.3    2243.6     416.6     2.32
+B standoff h = 0.10 mm                    33.6   99.9    6608.5    1876.9     337.0     0.84
+B standoff h = 0.25 mm                    24.3   99.8    7328.2    2144.3     388.9     1.51
+B standoff h = 1.00 mm                    13.4   99.6    7594.8    2502.9     476.2     4.40
+B standoff h = 2.00 mm                     8.4   99.2    7165.5    2640.1     532.7     6.57
+B standoff h = 5.00 mm                     3.3   95.0    5785.0    2604.9     608.1     9.90
+C 1.1 pct NaCl, 25 C                      18.8   99.7    7498.4    2162.4     359.0     2.59
+C 0.9 pct NaCl, 20 C                      18.5   99.7    7623.3    2332.9     431.4     2.69
+C 0.9 pct NaCl, 37 C                      18.8   99.7    7598.8    2250.5     389.6     2.55
+C muscle-equivalent target                18.8   99.6    8127.2    2579.9     465.6     2.09
+C pure water (no salt), 25 C              17.7   99.7    8358.3    3394.7    1007.5     3.16
+D gel depth 20 mm                         18.2   99.6    7603.6    2187.0    1340.5     2.59
+D gel depth 40 mm                         18.5   99.7    7634.5    2327.0     502.4     2.65
+E metal (PEC) dish under gel              18.4   99.7    7628.8    2310.3     579.5     2.64
+
+saved results/sensitivity.mat
+
+=========== CLOSED-FORM REDUCTION ===========
+fit region: 4 <= R <= 28 mm, depth >= 1 mm, |x| <= 45 mm  (18142 pts)
+  MODEL 1 point source, no image : rms  3.36 dB | max 22.72 dB | <1dB  15% | <2dB  48%
+        K=8.223  q=1.072  p=1.379  alpha_fit=49.58 Np/m (exact 58.98)
+  MODEL 2 point source + image  : rms  3.33 dB | max 22.87 dB | <1dB  18% | <2dB  49%
+        K=16.8  q=1.082  p=1.246  Gamma=0.265-0.378j
+  MODEL 3 line source + image   : rms  1.41 dB | max 11.22 dB | <1dB  70% | <2dB  90%
+        K=3924  q=0.784  p=1.144  Gamma=0.170-0.253j  (|Gamma|=0.305)
+        k1 = 446.49 - j58.98 rad/m (exact, NOT fitted)
+
+saved results/closed_form.mat and figures/fig9_closed_form_fit.png
+=== E_gel spot checks ===
+(6,-5)mm t=0: |E|=2236.8 Erms=4319.9 Epeak=5870.8 Emin=1690.3 AR=0.288 SAR=50812
+|E|(t) 1 period: 2237 5159 5685 3273 2237 5159 5685 3273 2237 
