@@ -5,6 +5,7 @@ Heatmodel/results/*.mat
 Gel_model_V3/gel_heating_solution_*.mat
 Gel_model_V4/solutions/
 V5_convection/Coupled_heating_GUI/exports/
+V5_convection/Coupled_heating_GUI/README.md
 
 # MATLAB
 *.asv
